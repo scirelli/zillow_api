@@ -102,3 +102,11 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+
+
+# Chris Other files to ignore
+.xlsx
+.txt
+*.xlsx
+*.txt
