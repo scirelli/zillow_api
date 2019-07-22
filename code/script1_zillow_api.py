@@ -27,7 +27,12 @@ zillow_data = ZillowWrapper(web_service_id)
 def address_search(address, zipcode, output):
 	deep_search_response = zillow_data.get_deep_search_results(address, zipcode)
 	result = GetDeepSearchResults(deep_search_response)
-	if output == 'sdout':
+	if output == 'stdout':
+		print('Home detail lin => {}'.format(result.home_detail_link))
+		print('Tax year        => {}'.format(result.tax_year))
+		print('Tax value       => {}'.format(result.tax_value))
+		print('Last Sold price => {}'.format(result.last_sold_price))
+		print('Last sold date  => {}'.format(result.last_sold_date))
 		print('Home size       => {}'.format(result.home_size))
 		print('Property size   => {}'.format(result.property_size))
 		print('Home_type       => {}'.format(result.home_type))
@@ -38,8 +43,8 @@ def address_search(address, zipcode, output):
 		print('Zillow low est  => {}'.format(result.zestimate_valuation_range_high))
 		print('Zillow high est => {}'.format(result.zestimate_valuationRange_low))
 		print('Value change    => {}'.format(result.zestimate_value_change))
+		print('Zillow prct     => {}'.format(result.zestimate_percentile))
 		print('Zillow id       => {}'.format(result.zillow_id))
-		print('Zpid            => {}'.format(result.zpid))
 	elif output == 'return_id':
 		zillow_id = result.zillow_id
 		return zillow_id
@@ -52,6 +57,9 @@ def zillow_id_search(zillow_id):
 	print('Home type       => {}'.format(result.home_type))
 	print('Neighborhood    => {}'.format(result.neighborhood))
 	print('School District => {}'.format(result.school_district))
+	print('Basement        => {}'.format(result.basement))
+	print('Roof            => {}'.format(result.roof))
+	
 	print('\n')
 	
 	return None
@@ -60,8 +68,13 @@ def zillow_id_search(zillow_id):
 # TEST API ON ADDRESSES------------------------------------------------------
 os.chdir('/home/ccirelli2/Desktop/repositories/zillow_api/output')
 df_home_data = pd.read_excel('zillow_scraper_output_2019-07-21.xlsx')
-print(df_home_data.head())
+'''columns = street_address, zipcode'''
+num_homes = len(df_home_data['zipcode'])
+test = df_home_data.head(1)
 
+
+
+address_search(test['street_address'], test['zipcode'], 'stdout')
 
 
 

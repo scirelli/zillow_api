@@ -9,6 +9,35 @@ from datetime import datetime
 
 # FUNCTION TO GET MAX PAGE NUMBER FROM START PAGE
 
+def get_school_ranking(url):
+	Content = urllib.request.Request(url, headers={
+                       'authority': 'www.zillow.com',
+                       'method': 'GET',
+                       'path': '/homes/',
+                       'scheme': 'https',
+                       'user-agent':
+                       ''''Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6)
+                        AppleWebKit/537.36 (KHTML, like Gecko)
+                        Chrome/61.0.3163.100 Safari/537.36'''})
+	html = urlopen(Content)
+	# Create Beautifulsoup object
+	bsObj = BeautifulSoup(html.read(), 'lxml')
+	# Narrow down tags to the ones that hold the ratings
+	school_list = bsObj.findAll('div', {'class':'ds-nearby-schools-list'})
+	test = school_list[0].findAll('div', {'class':'ds-school-rating'})
+	# Create a list to house the ratings
+	list_ratings = []
+	# Iterate the trags retreiving the text from each, then split to get just the rating
+	[list_ratings.append(x.text.split('/')[0]) for x in test]	
+	# Return a list object with the ratings
+	return list_ratings
+	
+
+
+url = 'https://www.zillow.com/homes/for_sale/14671207_zpid/34.082877,-84.245653,33.947134,-84.384527_rect/12_zm/1_fr/'
+school_rating = get_school_ranking(url)	
+print(school_rating)
+
 def get_max_page_num(bsObj):
 
 	# Find Tag where house photos are saved on page (list of houses)
@@ -67,7 +96,7 @@ def get_home_data(city, state):
 	df_home_data = pd.DataFrame({})
 	
 	# Get bsObj and max page Num
-	bsObj_main = get_bsObj_main_page('Roswell', 'GA', 1)
+	bsObj_main = get_bsObj_main_page(city, state, 1)
 	max_page_num = int(bsObj_main[1])
 
 	# Lists to capture Home Data
@@ -78,6 +107,9 @@ def get_home_data(city, state):
 	city            = []
 	longitude       = []
 	latitude        = []
+	elementary_school_rating = []
+	middle_school_rating     = []
+	high_school_rating       = []
 
 	# Iterate Over Pages
 	for page_num in range(1, max_page_num + 1):
@@ -85,7 +117,7 @@ def get_home_data(city, state):
 		print('Scraping page {} of {}'.format(page_num, max_page_num))		
 
 		# Find Tag where house photos are saved on page (list of houses)
-		bsObj_other_pages = get_bsObj_main_page('Roswell', 'GA', page_num)
+		bsObj_other_pages = get_bsObj_main_page(city, state, page_num)
 		bsObj = bsObj_other_pages[0]
 		photo_cards = bsObj.find('ul', {'class':'photo-cards'})
 		list_homes = photo_cards.findAll('li')
@@ -93,7 +125,13 @@ def get_home_data(city, state):
 		# Loop Over tags
 		for home_data in list_homes:
 		
-			# Try Get Content		
+			# Get School Ratings
+			school_rankings = get_school_ranking(home_data)
+			elementary_school_rating.append(school_rankings[0])
+			middle_school_rating.append(school_rankings[1])
+			high_school_rating.append(school_rankings[2])			
+
+			# Get Other Values From List of Homes
 			try:
 				tag_contents = home_data.script.contents	
 				create_list = tag_contents[0].split(',')
@@ -136,17 +174,21 @@ def get_home_data(city, state):
 		sleep(sleep_seconds)		
 
 	# Build DataFrame
-	df_home_data['hometype']		= hometype
-	df_home_data['street_address']	= street_address		
-	df_home_data['state']			= state
-	df_home_data['zipcode']			= zipcode		
-	df_home_data['city']			= city
-	df_home_data['longitude']		= longitude
-	df_home_data['latitude']		= latitude
+	df_home_data['hometype']			= hometype
+	df_home_data['street_address']		= street_address		
+	df_home_data['state']				= state
+	df_home_data['zipcode']				= zipcode		
+	df_home_data['city']				= city
+	df_home_data['longitude']			= longitude
+	df_home_data['latitude']			= latitude
+	df_home_data['elementary_rating']	= elementary_school_rating
+	df_home_data['middle_school_rating']= middle_school_rating
+	df_home_data['high_school_rating']	= high_school_rating	
+
 
 	# Generate Results & Excel File	
 	date = datetime.today().date()
-	excel_file_name  = 'zillow_scraper_output_{}.xlsx'.format(date)
+	excel_file_name  = 'zillow_scraper_output_{}_{}_{}.xlsx'.format(city, state, date)
 	df_home_data.to_excel(excel_file_name)
 	print('Saving results to excel file {}'.format(excel_file_name))
 	print('Returning results')
@@ -155,8 +197,6 @@ def get_home_data(city, state):
 	return None		
 
 
-# RUN FUNCTION
-get_home_data('Roswell', 'GA')
 
-
+get_home_data('Woodstock', 'GA')
 
