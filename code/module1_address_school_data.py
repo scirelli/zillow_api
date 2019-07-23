@@ -12,18 +12,18 @@ import random
 # MYSQL INSERT FUNCTIONS ----------------------------------------------
 
 def sql_insert_function_addresses(mydb, val):
-        mycursor = mydb.cursor()
-        sql_command = '''
+		mycursor = mydb.cursor()
+		sql_command = '''
 		INSERT INTO ADDRESSES (
 					
 					street_address, state, zipcode, city, longitude, 
 					latitude, pull_date, url) 
 					
 					VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'''
-        
+
 		mycursor.execute(sql_command, val)
-        mydb.commit()
-        return None
+		mydb.commit()
+		return None
 
 def sql_insert_function_schools(mydb, val):
         mycursor = mydb.cursor()
@@ -113,12 +113,12 @@ def get_list_homes(bsObj):
 	'''
 	try:
 		photo_cards = bsObj.find('ul', {'class':'photo-cards'})
-        list_homes = photo_cards.findAll('li')
-        return list_homes
+		list_homes = photo_cards.findAll('li')
+		return list_homes
 
 	except AttributeError as err:
 		print('Attribute error generated from find photo-card request')
-        print('Error => {}\n'.format(err))
+		print('Error => {}\n'.format(err))
 
 
 # CLEAN TAGS CONTAINING INDIVIDUAL HOUSE DATA
@@ -147,7 +147,7 @@ def clean_house_tags(home_data):
 # FUNCTION TO GET MAX PAGE NUMBER FROM START PAGE------------------------------
 def get_school_ranking(url):
 	url_full = 'https://www.zillow.com' + url
-	print(url_full)
+
 	Content = urllib.request.Request(url_full, headers={
                        'authority': 'www.zillow.com',
                        'method': 'GET',
@@ -165,7 +165,6 @@ def get_school_ranking(url):
 	# Narrow down tags to the ones that hold the ratings
 	school_list = bsObj.findAll('div', {'class':'ds-nearby-schools-list'})	
 	try:
-		print('School list => {}'.format(school_list))
 		ratings = school_list[0].findAll('div', {'class':'ds-school-rating'})
 		# Create a list to house the ratings
 		list_ratings = []
@@ -181,47 +180,50 @@ def get_school_ranking(url):
 
 # CREATE DICTIONARY OBJECT OF SCRAPED DATA-------------------------------------
 
-def scrape_housing_data(obj):
+def scrape_housing_data(cleaned_obj):
 	'''Input:	String object that contains key:value pairs of housing data
 	   Output:	Dictionary object containing this data'''
 	
-	# Split Key Value Pairs on colon so that we may reference the key
-	key_value = obj.split(':')
-
 	# Create Dictionary Object to House Scraped Data
-    Dict_house_data = {}
+	Dict_house_data = {}
 
-	# Define Pull Date
-    Dict_house_data['pull_date']    = datetime.today().date() #2019-07-23
+	# Iterate Objects
+	for obj in cleaned_obj:
+	
+		# Split Key Value Pairs on colon so that we may reference the key
+		key_value = obj.split(':')
 
-	# Address
-	elif key_value[0]   == 'streetAddress':
-		Dict_house_data['street_address']           = key_value[1]
-	# State
-	elif key_value[0]   == 'addressRegion':
-		Dict_house_data['state']                    = key_value[1]
-	# Zip Code
-	elif key_value[0] == 'postalCode':
-		Dict_house_data['zipcode']                  = key_value[1]
-	# City
-	elif key_value[0] == 'addressLocality':
-		Dict_house_data['city']                     = key_value[1]
-	# Longitude
-	elif key_value[0] == 'longitude':
-		Dict_house_data['longitude']                = key_value[1]
-	# Latitude
-	elif key_value[0] == 'latitude':
-		Dict_house_data['latitude']                 = key_value[1]
+		# Define Pull Date
+		Dict_house_data['pull_date']    = datetime.today().date()
+	
+		# Address
+		if key_value[0]   == 'streetAddress':
+			Dict_house_data['street_address']           = key_value[1]
+		# State
+		elif key_value[0]   == 'addressRegion':
+			Dict_house_data['state']                    = key_value[1]
+		# Zip Code
+		elif key_value[0] == 'postalCode':
+			Dict_house_data['zipcode']                  = key_value[1]
+		# City
+		elif key_value[0] == 'addressLocality':
+			Dict_house_data['city']                     = key_value[1]
+		# Longitude
+		elif key_value[0] == 'longitude':
+			Dict_house_data['longitude']                = key_value[1]
+		# Latitude
+		elif key_value[0] == 'latitude':
+			Dict_house_data['latitude']                 = key_value[1]
 
-	# Get Url
-	elif key_value[0] == 'url':
-		Dict_house_data['url']      = key_value[1]
-
-		# School Ranking Data
-		school_rankings = get_school_ranking(url)
-        Dict_house_data['elementary_school_rating'] = school_rankings[0]
-        Dict_house_data['middle_school_rating']     = school_rankings[1]
-        Dict_house_data['high_school_rating']       = school_rankings[2]    
+		# Get Url
+		elif key_value[0] == 'url':
+			Dict_house_data['url']      = key_value[1]
+			url                         = key_value[1]
+			# School Ranking Data
+			school_rankings = get_school_ranking(url)
+			Dict_house_data['elementary_school_rating'] = school_rankings[0]
+			Dict_house_data['middle_school_rating']     = school_rankings[1]	
+			Dict_house_data['high_school_rating']       = school_rankings[2]    
 
 	# Return Dictionary Object
 	return Dict_house_data
