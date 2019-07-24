@@ -10,7 +10,6 @@ import random
 
 
 # MYSQL INSERT FUNCTIONS ----------------------------------------------
-
 def sql_insert_function_addresses(mydb, val):
 		mycursor = mydb.cursor()
 		sql_command = '''
@@ -42,6 +41,41 @@ def sql_insert_function_schools(mydb, val):
 
 
 
+# MYSQL - CLEAR TABLE FUNCTION-----------------------------------------
+def clear_table(mydb, decision = 'No'):
+
+	if decision == 'Yes':
+
+		# Delete Addresses Data
+		mycursor = mydb.cursor()
+		sql_command = 'DELETE FROM ADDRESSES;'
+		mycursor.execute(sql_command)
+		mydb.commit()
+		print("Data successfully cleared from 'Addresses' table")  
+
+		# Delete House Details Data
+		mycursor = mydb.cursor()
+		sql_command = 'DELETE FROM HOUSE_DETAILS;'
+		mycursor.execute(sql_command)
+		mydb.commit()	
+		print("Data successfully cleared from 'House Details' table")
+
+		# Delete Schools Data
+		mycursor = mydb.cursor()
+		sql_command = 'DELETE FROM SCHOOLS;'	
+		mycursor.execute(sql_command)
+		mydb.commit()
+		print("Data successfully cleared from 'Schools' table\n")
+
+	elif decision == 'No':
+		# Do Not Delete Table Data
+		print("Data will not be cleared from the Addresses, House details and Schools tables")
+
+	# Return None
+	return None
+
+
+
 # GET MAX PAGE NUMBER --------------------------------------------------
 def get_max_page_num(bsObj):
 	'''
@@ -67,7 +101,6 @@ def get_max_page_num(bsObj):
 
 
 # GET ADDRESSES OF ALL PROPERTIES IN CITY/STATE COMBO-----------------------
-
 def get_bsObj_main_page(city, state, page, return_value = None):
 	'''
 	Purpose:	Obtain the bsObj for the main page where the list of houses are located. 
@@ -122,7 +155,6 @@ def get_list_homes(bsObj):
 
 
 # CLEAN TAGS CONTAINING INDIVIDUAL HOUSE DATA
-
 def clean_house_tags(home_data):
 	'''Input:	Individual tag for containing home data
 	   Output:  list of clean data represented by key:value pairs. 
@@ -179,13 +211,12 @@ def get_school_ranking(url):
 
 
 # CREATE DICTIONARY OBJECT OF SCRAPED DATA-------------------------------------
-
-def scrape_housing_data(cleaned_obj):
+def scrape_location_and_school_data(cleaned_obj, return_value):
 	'''Input:	String object that contains key:value pairs of housing data
-	   Output:	Dictionary object containing this data'''
+	   Output:	List object w/ values'''
 	
 	# Create Dictionary Object to House Scraped Data
-	Dict_house_data = {}
+	Dict_h_data = {}
 
 	# Iterate Objects
 	for obj in cleaned_obj:
@@ -194,46 +225,68 @@ def scrape_housing_data(cleaned_obj):
 		key_value = obj.split(':')
 
 		# Define Pull Date
-		Dict_house_data['pull_date']    = datetime.today().date()
+		Dict_h_data['pull_date']    = datetime.today().date()
 	
 		# Address
 		if key_value[0]   == 'streetAddress':
-			Dict_house_data['street_address']           = key_value[1]
+			Dict_h_data['street_address']           = key_value[1]
 		# State
 		elif key_value[0]   == 'addressRegion':
-			Dict_house_data['state']                    = key_value[1]
+			Dict_h_data['state']                    = key_value[1]
 		# Zip Code
 		elif key_value[0] == 'postalCode':
-			Dict_house_data['zipcode']                  = key_value[1]
+			Dict_h_data['zipcode']                  = key_value[1]
 		# City
 		elif key_value[0] == 'addressLocality':
-			Dict_house_data['city']                     = key_value[1]
+			Dict_h_data['city']                     = key_value[1]
 		# Longitude
 		elif key_value[0] == 'longitude':
-			Dict_house_data['longitude']                = key_value[1]
+			Dict_h_data['longitude']                = key_value[1]
 		# Latitude
 		elif key_value[0] == 'latitude':
-			Dict_house_data['latitude']                 = key_value[1]
+			Dict_h_data['latitude']                 = key_value[1]
 
 		# Get Url
 		elif key_value[0] == 'url':
-			Dict_house_data['url']      = key_value[1]
+			Dict_h_data['url']      = key_value[1]
 			url                         = key_value[1]
 			# School Ranking Data
 			school_rankings = get_school_ranking(url)
-			Dict_house_data['elementary_school_rating'] = school_rankings[0]
-			Dict_house_data['middle_school_rating']     = school_rankings[1]	
-			Dict_house_data['high_school_rating']       = school_rankings[2]    
+			Dict_h_data['elementary_school_rating'] = school_rankings[0]
+			Dict_h_data['middle_school_rating']     = school_rankings[1]	
+			Dict_h_data['high_school_rating']       = school_rankings[2]    
 
-	# Return Dictionary Object
-	return Dict_house_data
+	# Return Location Data
+	if return_value == 'location':
+		val_addresses = [
+						Dict_h_data['street_address'], Dict_h_data['state'],
+                        Dict_h_data['zipcode'], Dict_h_data['city'],
+                        Dict_h_data['longitude'], Dict_h_data['latitude'],
+                        Dict_h_data['pull_date'], Dict_h_data['url']
+			            ]
+		return val_addresses
 
+	# Return School Values
+	elif return_value == 'school':
+		val_schools =  [
+                        Dict_h_data['street_address'], Dict_h_data['state'], 
+                        Dict_h_data['pull_date'], 
+                        Dict_h_data['elementary_school_rating'],
+                        Dict_h_data['middle_school_rating'], 
+                        Dict_h_data['high_school_rating'], Dict_h_data['url']
+                        ] 
+		return val_schools
 
+	# Return the dictionary if the data is being used for the zillow api so that we can 
+	# Easily reference the key to the address and zipcodes. 
+	elif return_value == 'zillow_api':
+		# Return dictonary object w/ housing data
+		return Dict_h_data
 
-
-
-
-
+	# Input error
+	else:
+		print('THe eeturn value input for Location or School Data was invalid')
+	#----------------------------------------------------------------------------
 
 
 

@@ -9,17 +9,20 @@ from time import sleep
 from datetime import datetime
 import random
 import mysql.connector
+import pyzillow
+from pyzillow.pyzillow import ZillowWrapper, GetDeepSearchResults, GetUpdatedPropertyDetails
+
 
 # IMPORT MODULES----------------------------------------------------------------------
 import module1_address_school_data as m1
-
+import module2_zillow_api as m2
 
 # INSTANTIATE CONNECTION TO MYSQL DATABASE--------------------------------------------
 mydb = mysql.connector.connect(
                 host='localhost',
-                user= input('user_name   : '),
-                passwd= input('password  : '),
-                database= input('Database: '))
+                user= input('mysql user_name   : '),
+                passwd= input('mysql password    : '),
+                database= input('mysql database    : '))
 
 # SCRAPE DATA FOR EACH PAGE-----------------------------------------------------------
 def main_get_home_data(city, state):
@@ -61,26 +64,19 @@ def main_get_home_data(city, state):
 				# Iterate list of data on each house_________________________________
 				
 				# Scrape the data
-				dict_h_data = m1.scrape_housing_data(clean_objs)
-					
-				# Insert Address Data
-				val_addresses = [
-								dict_h_data['street_address'], dict_h_data['state'], 
-								dict_h_data['zipcode'], dict_h_data['city'], 
-								dict_h_data['longitude'], dict_h_data['latitude'], 
-								dict_h_data['pull_date'], dict_h_data['url']
-								]
-				m1.sql_insert_function_addresses(mydb, val_addresses)
+				val_location_data = m1.scrape_location_and_school_data(clean_objs, 'location')
+				m1.sql_insert_function_addresses(mydb, val_location_data)
 
 				# Insert School Data
-				val_schools =  [
-								dict_h_data['street_address'], dict_h_data['state'], 
-								dict_h_data['pull_date'], 
-								dict_h_data['elementary_school_rating'],
-								dict_h_data['middle_school_rating'], 
-								dict_h_data['high_school_rating'], dict_h_data['url']
-							   ] 
+				val_schools =		m1.scrape_location_and_school_data(clean_objs, 'school')
 				m1.sql_insert_function_schools(mydb, val_schools)
+
+				# Run Zillow API - Get House Details
+				Dict_house_data	= m1.scrape_location_and_school_data(clean_objs, 'zillow_api')
+				address			= Dict_house_data['street_address']
+				zipcode			= Dict_house_data['zipcode']
+				val_zillow_api_data = m2.get_house_data_zillow_api(address, zipcode)
+				m2.sql_insert_function_home_data(mydb, val_zillow_api_data) 
 					
 			# Catch Attribute Exception		
 			except AttributeError as err:
@@ -104,7 +100,34 @@ def main_get_home_data(city, state):
 
 
 
-# RUN SCRAPER---------------------------------------------------------------------
+# USER INPUT---------------------------------------------------------------------
 
-main_get_home_data('Roswell', 'GA')
+# User Input Data:
+City =  input('Enter City (ex: Roswell): ')
+State = input('Enter State (ex: GA)    : ')
+'''tables = ADDRESSES, HOUSE_DETAILS, SCHOOLS'''
+# Ask if they want to clear th etables
+clear_tables_decision = input('''Do you want to clear the followint tables:
+	1. Addresses, 
+	2. House Details, 
+	3. Schools
+
+	Indicate Yes or No:  ''')
+m1.clear_table(mydb, clear_tables_decision)
+
+
+# MAIN FUNCTION----------------------------------------------------------------
+
+main_get_home_data(City, State)
+
+
+
+
+
+
+
+
+
+
+
 
