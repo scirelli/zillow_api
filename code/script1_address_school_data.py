@@ -17,11 +17,16 @@ from pyzillow.pyzillow import ZillowWrapper, GetDeepSearchResults, GetUpdatedPro
 import module1_address_school_data as m1
 import module2_zillow_api as m2
 
+# USER INPUT-------------------------------------------------------------------------
+user_name = input('user name:  ')
+password  = input('password :  ')
+
+
 # INSTANTIATE CONNECTION TO MYSQL DATABASE--------------------------------------------
 mydb = mysql.connector.connect(
                 host='localhost',
-                user= input('mysql user_name   : '),
-                passwd= input('mysql password    : '),
+                user= user_name,
+                passwd= password,
                 database= input('mysql database    : '))
 
 # SCRAPE DATA FOR EACH PAGE-----------------------------------------------------------
@@ -42,17 +47,15 @@ def main_get_home_data(city, state):
 		# User Info
 		print('Scraping page {} of {}'.format(page_num, max_page_num))		
 		
-		# Get Find Tag where house photos are saved on page (list of houses)
-		bsObj_other_pages = m1.get_bsObj_main_page(city, state, page_num)
-		bsObj = bsObj_other_pages
+		# Get Tags where house photos are saved on page (list of houses)
+		bsObj = m1.get_bsObj_main_page(city, state, page_num)
 		
 		# Get List of Houses (Photo-cards) for each page)
 		list_homes = m1.get_list_homes(bsObj)
-		print('Getting list of homes')	
 
-		# Count Number of Homes
+		# Count Number of Pages
 		Count_num_pages = 0
-	
+
 		# Loop Over tags___________________________________________________
 		for home_data in list_homes:
 		
@@ -60,7 +63,7 @@ def main_get_home_data(city, state):
 			try:
 				# Clean tags
 				clean_objs = m1.clean_house_tags(home_data)
-	
+			
 				# Iterate list of data on each house_________________________________
 				
 				# Scrape the data
@@ -72,19 +75,20 @@ def main_get_home_data(city, state):
 				m1.sql_insert_function_schools(mydb, val_schools)
 
 				# Run Zillow API - Get House Details
+				print('@@@@ Obtaining Zillow API Data @@@')
 				Dict_house_data	= m1.scrape_location_and_school_data(clean_objs, 'zillow_api')
 				address			= Dict_house_data['street_address']
 				zipcode			= Dict_house_data['zipcode']
+				print(address)
 				val_zillow_api_data = m2.get_house_data_zillow_api(address, zipcode)
-				m2.sql_insert_function_home_data(mydb, val_zillow_api_data) 
-					
+				m2.sql_insert_function_zillow_api_data(mydb, val_zillow_api_data) 	
+						
 			# Catch Attribute Exception		
 			except AttributeError as err:
 				pass
 		
 		# Generate Random Sleep Period
 		sleep_seconds = random.randint(1,3)
-		Count_num_pages +=1
 		print('Data successfully scraped for page {}'.format(Count_num_pages))
 		print('Sleeping for {} seconds\n'.format(sleep_seconds))
 		sleep(sleep_seconds)		

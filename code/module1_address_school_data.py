@@ -9,25 +9,29 @@ from datetime import datetime
 import random
 
 
+
 # MYSQL INSERT FUNCTIONS ----------------------------------------------
 def sql_insert_function_addresses(mydb, val):
-		mycursor = mydb.cursor()
-		sql_command = '''
-		INSERT INTO ADDRESSES (
+	print('Inserting address information')
+	mycursor = mydb.cursor()
+	sql_command = '''
+	INSERT INTO ADDRESSES (
 					
 					street_address, state, zipcode, city, longitude, 
 					latitude, pull_date, url) 
 					
 					VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'''
 
-		mycursor.execute(sql_command, val)
-		mydb.commit()
-		return None
+	mycursor.execute(sql_command, val)
+	mydb.commit()
+	print('Address information successfully inserted\n')
+	return None
 
 def sql_insert_function_schools(mydb, val):
-        mycursor = mydb.cursor()
-        sql_command = '''
-		INSERT INTO SCHOOLS (
+	print('Inserting school information')
+	mycursor = mydb.cursor()
+	sql_command = '''
+	INSERT INTO SCHOOLS (
 
 					street_address, state, pull_date,  
 					elementary_school_rating, middle_school_rating, 
@@ -35,16 +39,17 @@ def sql_insert_function_schools(mydb, val):
 					
 					VALUES(%s, %s, %s, %s, %s, %s, %s)'''
 
-        mycursor.execute(sql_command, val)
-        mydb.commit()
-        return None
+	mycursor.execute(sql_command, val)
+	mydb.commit()
+	print('School information successfully inserted\n')
+	return None
 
 
 
 # MYSQL - CLEAR TABLE FUNCTION-----------------------------------------
 def clear_table(mydb, decision = 'No'):
 
-	if decision == 'Yes':
+	if decision == 'Yes' or decision == 'yes':
 
 		# Delete Addresses Data
 		mycursor = mydb.cursor()
@@ -196,6 +201,7 @@ def get_school_ranking(url):
 	
 	# Narrow down tags to the ones that hold the ratings
 	school_list = bsObj.findAll('div', {'class':'ds-nearby-schools-list'})	
+
 	try:
 		ratings = school_list[0].findAll('div', {'class':'ds-school-rating'})
 		# Create a list to house the ratings
@@ -248,8 +254,8 @@ def scrape_location_and_school_data(cleaned_obj, return_value):
 
 		# Get Url
 		elif key_value[0] == 'url':
-			Dict_h_data['url']      = key_value[1]
-			url                         = key_value[1]
+			Dict_h_data['url']						= key_value[1]
+			url										= key_value[1]
 			# School Ranking Data
 			school_rankings = get_school_ranking(url)
 			Dict_h_data['elementary_school_rating'] = school_rankings[0]
@@ -279,13 +285,14 @@ def scrape_location_and_school_data(cleaned_obj, return_value):
 
 	# Return the dictionary if the data is being used for the zillow api so that we can 
 	# Easily reference the key to the address and zipcodes. 
+
 	elif return_value == 'zillow_api':
 		# Return dictonary object w/ housing data
 		return Dict_h_data
 
 	# Input error
 	else:
-		print('THe eeturn value input for Location or School Data was invalid')
+		print('The return value input for Location or School Data was invalid')
 	#----------------------------------------------------------------------------
 
 
