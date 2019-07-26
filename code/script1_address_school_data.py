@@ -79,7 +79,7 @@ def main_get_home_data(city, state):
 				Dict_house_data	= m1.scrape_location_and_school_data(clean_objs, 'zillow_api')
 				address			= Dict_house_data['street_address']
 				zipcode			= Dict_house_data['zipcode']
-				print(address)
+			
 				val_zillow_api_data = m2.get_house_data_zillow_api(address, zipcode)
 				m2.sql_insert_function_zillow_api_data(mydb, val_zillow_api_data) 	
 						
