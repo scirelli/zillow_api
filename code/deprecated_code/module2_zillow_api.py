@@ -10,13 +10,11 @@ import urllib
 import os
 import sys
 from io import StringIO
-
+from datetime import datetime
 
 
 
 # ZILLOW API USER INFO----------------------------------------------------------
-
-# INSERT STATEMENT--------------------------------------------------------------
 
 def sql_insert_function_zillow_api_data(mydb, val):
 	print('Inserting zillow home data')
@@ -26,25 +24,27 @@ def sql_insert_function_zillow_api_data(mydb, val):
 		street_address, pull_date, zillow_id, home_type, 
 		tax_year, tax_value, year_built, last_sold_date, last_sold_price, 
 		home_size, property_size, num_bedrooms, num_bathrooms, 
-		zillow_low_est, zillow_high_est, value_change, zillow_percentile, url)
+		zillow_low_est, zillow_high_est, value_change, zillow_percentile)
 
-		VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-		'''
-	#****REmoved state added url
+	VALUES(	%s, %s, %s, %s, %s, %s, 
+			%s, %s, %s, %s, %s, %s, 
+			%s, %s, %s, %s, %s) 
+	'''
+
 	mycursor.execute(sql_command, val)
 	mydb.commit()
-	print('Zillow home data successfully inserted into db')
+	print('Zillow home data successfully inserted into db\n')
 	return None
 
 
 # GET DEEP SEARCH RESULTS-------------------------------------------------------
-def get_house_data_zillow_api(address, zipcode, pull_date, url):
+def get_house_data_zillow_api(address, zipcode, pull_date):
 	''' Purpose:  Utilizing the zillow api to query data for a single house 
 		Input:    Address and zipcode for a single house
 		Output:	  None.  We will use insert statement within this function'''
 
 	# User feedback
-	print('Start API Search')
+	print('Accessing Zillow API')
 	
 	# Instantiate connection to zillow database
 	web_service_id  = 'X1-ZWz1h90xzgg45n_2kpit'
@@ -66,7 +66,7 @@ def get_house_data_zillow_api(address, zipcode, pull_date, url):
 	print('tax_year,{}'.format(result.tax_year))
 	print('tax_value,{}'.format(result.tax_value)) 
 	print('year_built,{}'.format(result.year_built))
-	print('last_sold_date,{}'.format(result.last_sold_date)) 
+	print('last_sold_date,{}'.format(result.last_sold_date))
 	print('last_sold_price,{}'.format(result.last_sold_price)) 
 	print('home_size,{}'.format(result.home_size))
 	print('property_size,{}'.format(result.property_size))
@@ -95,24 +95,38 @@ def get_house_data_zillow_api(address, zipcode, pull_date, url):
 
 	val_zillow_api.append(address)
 	val_zillow_api.append(pull_date)
-	val_zillow_api.append(int(df.loc['zillow_id']))
-	val_zillow_api.append(df.loc['home_type'])
-	val_zillow_api.append(int(df.loc['tax_year']))
-	val_zillow_api.append(round(float(df.loc['tax_value']), 0))
-	val_zillow_api.append(int(df.loc['year_built']))
-	val_zillow_api.append(df.loc['last_sold_date'])
-	val_zillow_api.append(int(df.loc['last_sold_price']))
-	val_zillow_api.append(int(df.loc['home_size']))
-	val_zillow_api.append(int(df.loc['property_size']))
-	val_zillow_api.append(int(df.loc['num_bedrooms']))
-	val_zillow_api.append(round(float(df.loc['num_bathrooms']), 0))
-	val_zillow_api.append(int(df.loc['zillow_low_est']))
-	val_zillow_api.append(int(df.loc['zillow_high_est']))
-	val_zillow_api.append(float(df.loc['zillow_value_change']))
-	val_zillow_api.append(float(df.loc['zillow_percentile']))
-	val_zillow_api.append(url)
+	val_zillow_api.append(df.iloc[0,0])					# zillow_id
+	val_zillow_api.append(df.iloc[1,0])					# home type
+	val_zillow_api.append(df.iloc[2,0])					# tax year
+	val_zillow_api.append(df.iloc[3,0])					# tax value
+	val_zillow_api.append(df.iloc[4,0])					# year built
+	# Try to append formatted datetime object.  
+	try:
+		val_zillow_api.append(datetime.strptime(df.iloc[5, 0], '%m/%d/%Y')) # last sold date
+	# If None date append the arbitrary date of 01/01/1900
+	except ValueError as err:
+		print('Zillow api returned the following sold date => {}'.format(df.iloc[5,0]))
+		print('Zillow api value error generated:  {}'.format(err))		
+		val_zillow_api.append(datetime.strptime('01/01/1900', '%m/%d/%Y')) # last sold date
+
+	val_zillow_api.append(df.iloc[6,0])					# last sold price	
+	val_zillow_api.append(df.iloc[7,0])					# home size
+
+	# Test if property value == none.  Appaned 0 if None. 
+	if df.iloc[8,0] == None or df.iloc[8,0] == 'None':
+		val_zillow_api.append(0)					# property size
+	else:
+		val_zillow_api.append(df.iloc[8,0])
+
+	val_zillow_api.append(df.iloc[9,0])					# number bed rooms
+	val_zillow_api.append(df.iloc[10,0])				# num bathrooms
+	val_zillow_api.append(df.iloc[11,0])				# zillow_low_est
+	val_zillow_api.append(df.iloc[12,0])				# zillow high est
+	val_zillow_api.append(df.iloc[13,0])				# value change
+	val_zillow_api.append(df.iloc[14,0])				# zillow percentile
 
 	# Return List Object to be passed to sql insert function
+	print('Zillow API data successfully obtained\n')
 	return val_zillow_api
 
 	
@@ -139,14 +153,14 @@ def zillow_id_search(zillow_id):
 
 
 # TEST ZILLOW API
+'''
 address = '1175 Lea Drive'
 zipcode = 30076
 
 
-test = get_house_data_zillow_api(address, zipcode, '07/23/2019', 'zillow.com')
-print(test)
-
-
+test = get_house_data_zillow_api(address, zipcode, '07/23/2019')
+[print(x) for x in test]
+'''
 
 
 

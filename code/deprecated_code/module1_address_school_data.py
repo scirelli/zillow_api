@@ -7,31 +7,35 @@ import urllib
 from time import sleep
 from datetime import datetime
 import random
-
+import mysql.connector
 
 
 # MYSQL INSERT FUNCTIONS ----------------------------------------------
 def sql_insert_function_addresses(mydb, val):
-	print('Inserting address information')
-	mycursor = mydb.cursor()
-	sql_command = '''
-	INSERT INTO ADDRESSES (
+	try:
+		print('Inserting address information into db')
+		mycursor = mydb.cursor()
+		sql_command = '''
+		INSERT INTO ADDRESSES (
 					
-					street_address, state, zipcode, city, longitude, 
-					latitude, pull_date, url) 
+					street_address, state, zipcode, city, pull_date, url) 
 					
-					VALUES(%s, %s, %s, %s, %s, %s, %s, %s)'''
+					VALUES(%s, %s, %s, %s, %s, %s)'''
 
-	mycursor.execute(sql_command, val)
-	mydb.commit()
-	print('Address information successfully inserted\n')
-	return None
+		mycursor.execute(sql_command, val)
+		mydb.commit()
+		print('Address information successfully inserted\n')
+		return None
+	except mysql.connector.errors.ProgrammingError as err:
+		print('sql insert addresses function generated an error => {}'.format(err))
+
 
 def sql_insert_function_schools(mydb, val):
 	print('Inserting school information')
-	mycursor = mydb.cursor()
-	sql_command = '''
-	INSERT INTO SCHOOLS (
+	try:
+		mycursor = mydb.cursor()
+		sql_command = '''
+		INSERT INTO SCHOOLS (
 
 					street_address, state, pull_date,  
 					elementary_school_rating, middle_school_rating, 
@@ -39,10 +43,12 @@ def sql_insert_function_schools(mydb, val):
 					
 					VALUES(%s, %s, %s, %s, %s, %s, %s)'''
 
-	mycursor.execute(sql_command, val)
-	mydb.commit()
-	print('School information successfully inserted\n')
-	return None
+		mycursor.execute(sql_command, val)
+		mydb.commit()
+		print('School information successfully inserted\n')
+
+	except mysql.connector.errors.ProgrammingError as err:
+		print('sql insert schools function generated an error => {}'.format(err))
 
 
 
@@ -72,9 +78,10 @@ def clear_table(mydb, decision = 'No'):
 		mydb.commit()
 		print("Data successfully cleared from 'Schools' table\n")
 
-	elif decision == 'No':
+	elif decision == 'No' or decision == 'no':
 		# Do Not Delete Table Data
-		print("Data will not be cleared from the Addresses, House details and Schools tables")
+		print('''Data will not be cleared from the Addresses, 
+				 House details and Schools tables\n''')
 
 	# Return None
 	return None
@@ -144,21 +151,6 @@ def get_bsObj_main_page(city, state, page, return_value = None):
 		return bsObj		
 
 
-# GET TAGS ASSOCIATED WITH LIST OF HOMES DISPLAYED ON EACH PAGE
-def get_list_homes(bsObj):
-	'''
-	Purpose:  To get the html tags associated with the list of homes for each page. 
-	'''
-	try:
-		photo_cards = bsObj.find('ul', {'class':'photo-cards'})
-		list_homes = photo_cards.findAll('li')
-		return list_homes
-
-	except AttributeError as err:
-		print('Attribute error generated from find photo-card request')
-		print('Error => {}\n'.format(err))
-
-
 # CLEAN TAGS CONTAINING INDIVIDUAL HOUSE DATA
 def clean_house_tags(home_data):
 	'''Input:	Individual tag for containing home data
@@ -169,16 +161,20 @@ def clean_house_tags(home_data):
                 pairs.  Therefore, we split the string on the : and mine the list
                 for the values. 
 	'''
-	# Drill down into tag attributes 'script', 'contents'
-	tag_contents = home_data.script.contents    
-	# Split string on comma to separate data into key_value pairs
-	create_list = tag_contents[0].split(',')	
-	# Clean list by replacing punctuation
-	clean_objs = [x.replace('"', '').replace('{', '')\
+	
+	try:
+		# Drill down into tag attributes 'script', 'contents'
+		tag_contents = home_data.script.contents    
+		
+		# Split string on comma to separate data into key_value pairs
+		create_list = tag_contents[0].split(',')	
+		# Clean list by replacing punctuation
+		clean_objs = [x.replace('"', '').replace('{', '')\
                    .replace('}', '').replace('@', '') for x in create_list] 
-
-	# Return clean string
-	return clean_objs
+		return clean_objs
+	except AttributeError as err:
+		print('clean_house_tags function generated the following error: {}'.format(err))
+		# Return clean string
 
 
 # FUNCTION TO GET MAX PAGE NUMBER FROM START PAGE------------------------------
@@ -225,74 +221,119 @@ def scrape_location_and_school_data(cleaned_obj, return_value):
 	Dict_h_data = {}
 
 	# Iterate Objects
-	for obj in cleaned_obj:
+	try:
+		for obj in cleaned_obj:
 	
-		# Split Key Value Pairs on colon so that we may reference the key
-		key_value = obj.split(':')
+			# Split Key Value Pairs on colon so that we may reference the key
+			key_value = obj.split(':')
 
-		# Define Pull Date
-		Dict_h_data['pull_date']    = datetime.today().date()
+			# Define Pull Date--------------------------------------------------------------
+			try:
+				Dict_h_data['pull_date']    = datetime.today().date()
+			except AttributeError as err:
+				print('Adding pull_date to dictionary generated an error => {}'.format(err))
 	
-		# Address
-		if key_value[0]   == 'streetAddress':
-			Dict_h_data['street_address']           = key_value[1]
-		# State
-		elif key_value[0]   == 'addressRegion':
-			Dict_h_data['state']                    = key_value[1]
-		# Zip Code
-		elif key_value[0] == 'postalCode':
-			Dict_h_data['zipcode']                  = key_value[1]
-		# City
-		elif key_value[0] == 'addressLocality':
-			Dict_h_data['city']                     = key_value[1]
-		# Longitude
-		elif key_value[0] == 'longitude':
-			Dict_h_data['longitude']                = key_value[1]
-		# Latitude
-		elif key_value[0] == 'latitude':
-			Dict_h_data['latitude']                 = key_value[1]
+			# Address----------------------------------------------------------------------
+			try:
+				if key_value[0]   == 'streetAddress':
+					Dict_h_data['street_address']           = key_value[1]
+			except AttributeError as err:
+				print('Adding pull_date to dictionary generated an error => {}'.format(err))
+		
 
-		# Get Url
-		elif key_value[0] == 'url':
-			Dict_h_data['url']						= key_value[1]
-			url										= key_value[1]
-			# School Ranking Data
-			school_rankings = get_school_ranking(url)
-			Dict_h_data['elementary_school_rating'] = school_rankings[0]
-			Dict_h_data['middle_school_rating']     = school_rankings[1]	
-			Dict_h_data['high_school_rating']       = school_rankings[2]    
+			# State------------------------------------------------------------------------
+			try:
+				if key_value[0]	== 'addressRegion':
+					Dict_h_data['state']                    = key_value[1]
+			except AttributeError as err:
+				print('Adding pull_date to dictionary generated an error => {}'.format(err))
 
-	# Return Location Data
-	if return_value == 'location':
-		val_addresses = [
+			# Zip Code--------------------------------------------------------------------
+			try:	
+				if key_value[0] == 'postalCode':
+					Dict_h_data['zipcode']                  = key_value[1]
+			except AttributeError as err:
+				print('Adding pull_date to dictionary generated an error => {}'.format(err))
+
+			# City-------------------------------------------------------------------------
+			try:	
+				if key_value[0] == 'addressLocality':
+					Dict_h_data['city']                     = key_value[1]
+			except AttributeError as err:
+				print('Adding pull_date to dictionary generated an error => {}'.format(err))
+
+			# Longitude---------------------------------------------------------------------
+			try:
+				if key_value[0] == 'longitude':
+					Dict_h_data['longitude']                = key_value[1]
+			except AttributeError as err:
+				print('Adding pull_date to dictionary generated an error => {}'.format(err))
+
+			# Latitude----------------------------------------------------------------------
+			try:
+				if key_value[0] == 'latitude':
+					Dict_h_data['latitude']                 = key_value[1]
+			except AttributeError as err:
+				print('Adding pull_date to dictionary generated an error => {}'.format(err))
+
+			# Get Url----------------------------------------------------------------------
+			try:
+				if key_value[0] == 'url':
+					Dict_h_data['url']						= key_value[1]
+					url										= key_value[1]
+				
+					# School Ranking Data
+					school_rankings = get_school_ranking(url)
+					Dict_h_data['elementary_school_rating'] = school_rankings[0]
+					Dict_h_data['middle_school_rating']     = school_rankings[1]	
+					Dict_h_data['high_school_rating']       = school_rankings[2]    
+		
+			except IndexError as err:
+				print('''Warning:	Scrape address rating and school data function generated 
+									an index error in where we add the school ratings to the 
+									dictionary.
+			   		     Error =>		{}'''.format(err))
+				print('Returning value [0,0,0] for school rating')
+				Dict_h_data['elementary_school_rating'] = 0 
+				Dict_h_data['middle_school_rating']     = 0	
+				Dict_h_data['high_school_rating']       = 0    
+									   
+
+		# Return Location Data
+		if return_value == 'location':
+			val_addresses = [
 						Dict_h_data['street_address'], Dict_h_data['state'],
                         Dict_h_data['zipcode'], Dict_h_data['city'],
                         Dict_h_data['longitude'], Dict_h_data['latitude'],
                         Dict_h_data['pull_date'], Dict_h_data['url']
 			            ]
-		return val_addresses
+			return val_addresses
 
-	# Return School Values
-	elif return_value == 'school':
-		val_schools =  [
+		# Return School Values
+		elif return_value == 'school':
+			val_schools =  [
                         Dict_h_data['street_address'], Dict_h_data['state'], 
                         Dict_h_data['pull_date'], 
                         Dict_h_data['elementary_school_rating'],
                         Dict_h_data['middle_school_rating'], 
                         Dict_h_data['high_school_rating'], Dict_h_data['url']
                         ] 
-		return val_schools
+			return val_schools
 
-	# Return the dictionary if the data is being used for the zillow api so that we can 
-	# Easily reference the key to the address and zipcodes. 
+		# Return the dictionary if the data is being used for the zillow api so that we can 
+		# Easily reference the key to the address and zipcodes. 
 
-	elif return_value == 'zillow_api':
-		# Return dictonary object w/ housing data
-		return Dict_h_data
+		elif return_value == 'zillow_api':
+			# Return dictonary object w/ housing data
+			return Dict_h_data
 
-	# Input error
-	else:
-		print('The return value input for Location or School Data was invalid')
+		# Input error
+		else:
+			print('The return value input for Location or School Data was invalid')
+	
+	# Except Errors 
+	except TypeError as err:
+		print("For loop 'for obj in cleaned obj' generated an error => {}".format(err))
 	#----------------------------------------------------------------------------
 
 
