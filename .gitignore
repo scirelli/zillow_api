@@ -110,3 +110,6 @@ venv.bak/
 .txt
 *.xlsx
 *.txt
+.csv
+*.csv
+*.swp

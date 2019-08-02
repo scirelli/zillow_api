@@ -14,7 +14,10 @@ from pyzillow.pyzillow import ZillowWrapper, GetDeepSearchResults, GetUpdatedPro
 
 
 # IMPORT MODULES----------------------------------------------------------------------
-import module1_scraper as m1
+import module1_sql_functions as m1
+import module2_get_value_functions as m2
+import module3_zillow_api as m3
+import module4_url_filters as m4
 
 
 # USER INPUT-------------------------------------------------------------------------
@@ -34,6 +37,10 @@ mydb = mysql.connector.connect(
 pull_date = datetime.today().date()
 
 
+# URL SYNTAX FOR FILTERS------------------------------------------------------------
+
+
+
 # SCRAPE DATA FOR EACH PAGE-----------------------------------------------------------
 def main_get_home_data(city, state):
 	
@@ -41,7 +48,7 @@ def main_get_home_data(city, state):
 	df_home_data = pd.DataFrame({})
 	
 	# Get bsObj and max page Num
-	max_page_num = m1.get_bsObj_main_page(city, state, 1, 'max_page_num')
+	max_page_num = m2.get_bsObj_main_page(city, state, 1, 'max_page_num')
 
 	# Lists to capture Home Data
 	'''to be replaced by insert statements'''
@@ -55,24 +62,29 @@ def main_get_home_data(city, state):
 		pull_date = datetime.today().date()
 		
 		# Get Tags where house photos are saved on page (list of houses)
-		bsObj = m1.get_bsObj_main_page(city, state, page_num)
+		bsObj = m2.get_bsObj_main_page(city, state, page_num)
 		
 		# Get List of Houses (Photo-cards) for each page)
-		list_homes = m1.get_list_homes(bsObj)
-	
+		list_homes = m2.get_list_homes(bsObj)
+		
+		
 		# Page Counts
 		Count_num_pages = 1
 		count_homes_scraped = 0
-
-		#LOOP OVER HOME TAGS_____________ ___________________________________________________
+		
+		#LOOP OVER HOME TAGS________________________________________________________________
 		
 		if list_homes != None:
 			for home in list_homes:
+			
+				# Asking price
+				asking_price = m2.get_sale_asking_price(home)				
+	
 				# Num home object
 				total_homes_on_page = len(list_homes)
 
 				# Clean house tags
-				clean_house_tags = m1.clean_house_tags_4_address_zipcode_scrape(home)
+				clean_house_tags = m2.clean_house_tags_4_address_zipcode_scrape(home)
 				# Can return none object.  pass if None. 
 				if clean_house_tags == None:
 					pass
@@ -82,28 +94,29 @@ def main_get_home_data(city, state):
 					# ADDRESSES TABLE--------------------------------------------------
 					'street_address, state, zipcode, city, pull_date, url'
 					# Get Url	
-					url = m1.get_url(home)
+					url = m2.get_url(home)
 					# Obtain Zipcode
-					zip_code	= m1.get_zip_code(clean_house_tags)
+					zip_code	= m2.get_zip_code(clean_house_tags)
 					# Obtain Address
-					address		= m1.get_address(clean_house_tags)
+					address		= m2.get_address(clean_house_tags)
 					# Insert Data Into Database
 					val_addresses = [address, state, zip_code, city, pull_date, url]
 					m1.sql_insert_function_addresses(mydb, val_addresses)
 				
 					# ZILLOW API---------------------------------------------------------
-					val_zillow_api_data = m1.get_house_data_zillow_api(address, zip_code, pull_date)
+					val_zillow_api_data = m3.get_house_data_zillow_api(address, zip_code, 
+											 pull_date, asking_price)
 					m1.sql_insert_function_zillow_api_data(mydb, val_zillow_api_data)
 
 					# SCHOOL RANKINGS----------------------------------------------------
-					school_rankings = m1.get_school_ranking(url)
+					school_rankings = m2.get_school_ranking(url)
 					m1.sql_insert_function_schools(	mydb, school_rankings, address, state, 
 												pull_date, url)
 
-				# Increment Num homes
-				print('{} of {} homes data scraped'.format(count_homes_scraped, 
-						total_homes_on_page))
-				count_homes_scraped +=1	
+					# Increment Num homes
+					print('{} of {} homes data scraped'.format(count_homes_scraped, 
+					total_homes_on_page))
+					count_homes_scraped +=1	
 				
 
 			# Generate Random Sleep Period
@@ -113,7 +126,6 @@ def main_get_home_data(city, state):
 			sleep(sleep_seconds)		
 
 	return None		
-
 
 
 # USER INPUT---------------------------------------------------------------------
@@ -134,10 +146,12 @@ m1.clear_table(mydb, clear_tables_decision)
 
 
 # MAIN FUNCTION----------------------------------------------------------------
-
 main_get_home_data(City, State)
 
 
+
+# NOTES_ ----------------------------------------------------------------------
+'''Add filter for home types'''
 
 
 
