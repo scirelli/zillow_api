@@ -74,34 +74,35 @@ def sql_insert_function_addresses(mydb, val):
 
 
 # SCHOOL RANKING INSERT FUNCTION -----------------------------------------
-def sql_insert_function_schools(mydb, val, street_address, state, pull_date, url):
+def sql_insert_function_schools(mydb, val, street_address, pull_date, url):
 	#print('Inserting school ranking data')
 
-	if len(val) < 3:
-		print('Less than three school rankings scraped. Returning 0,0,0')
-		return [0,0,0]
+	if val != None:
+		if len(val) < 3:
+			print('Less than three school rankings scraped. Returning 0,0,0')
+			return [0,0,0]
 
-	# If its not, lets proceed with the insertion. 
-	else:
-		try:
-			mycursor = mydb.cursor()
-			sql_command = '''
-			INSERT IGNORE INTO SCHOOLS (
+		# If its not, lets proceed with the insertion. 
+		else:
+			try:
+				mycursor = mydb.cursor()
+				sql_command = '''
+				INSERT IGNORE INTO SCHOOLS (
 
-                    street_address, state, pull_date,  
+                    street_address, pull_date,  
                     elementary_school_rating, middle_school_rating, 
                     high_school_rating, url) 
                     
-                    VALUES(%s, %s, %s, %s, %s, %s, %s)'''
-			val_insert = [street_address ,state, pull_date, 
+                    VALUES(%s, %s, %s, %s, %s, %s)'''
+				val_insert = [street_address, pull_date, 
 						  val[0], val[1], val[2], url]
-			mycursor.execute(sql_command, val_insert)
-			mydb.commit()
-			#print('School information successfully inserted\n')
+				mycursor.execute(sql_command, val_insert)
+				mydb.commit()
+				#print('School information successfully inserted\n')
 
-		except mysql.connector.errors.ProgrammingError as err:
-			print('sql insert schools function generated an error => {}'.format(err))
-			print('sql insert schools function generated an error => {}'.format(err))
+			except mysql.connector.errors.ProgrammingError as err:
+				print('sql insert schools function generated an error => {}'.format(err))
+				print('sql insert schools function generated an error => {}'.format(err))
 
 
 # ZILLOW API INSERT FUNCTION --------------------------------------------------

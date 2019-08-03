@@ -58,7 +58,8 @@ def main_get_home_data(city, state):
 	for page_num in range(1, max_page_num + 1):
 		
 		# User Info
-		print('Scraping page {} of {}'.format(page_num, max_page_num))		
+		print('Scraping page {} of {} --------------------------------------------------------'\
+				.format(page_num, max_page_num))		
 		pull_date = datetime.today().date()
 		
 		# Get Tags where house photos are saved on page (list of houses)
@@ -110,18 +111,18 @@ def main_get_home_data(city, state):
 
 					# SCHOOL RANKINGS----------------------------------------------------
 					school_rankings = m2.get_school_ranking(url)
-					m1.sql_insert_function_schools(	mydb, school_rankings, address, state, 
+					m1.sql_insert_function_schools(	mydb, school_rankings, address,  
 												pull_date, url)
 
 					# Increment Num homes
-					print('{} of {} homes data scraped'.format(count_homes_scraped, 
-					total_homes_on_page))
+					print('{} of {} home data scraped'.format(
+						count_homes_scraped, total_homes_on_page))
 					count_homes_scraped +=1	
 				
 
 			# Generate Random Sleep Period
 			print('Data successfully scraped for page {}'.format(page_num))
-			sleep_seconds = random.randint(1,3)
+			sleep_seconds = random.randint(5,10)
 			print('Sleeping for {} seconds\n'.format(sleep_seconds))
 			sleep(sleep_seconds)		
 
@@ -135,6 +136,7 @@ City =  input('Enter City (ex: Roswell): ')
 State = input('Enter State (ex: GA)    : ')
 '''tables = ADDRESSES, HOUSE_DETAILS, SCHOOLS'''
 # Ask if they want to clear th etables
+
 clear_tables_decision = input('''Do you want to delete the data from the following tables?
 	
 	1. Addresses, 
@@ -142,7 +144,7 @@ clear_tables_decision = input('''Do you want to delete the data from the followi
 	3. Schools
 
 	Indicate Yes or No:  ''')
-m1.clear_table(mydb, clear_tables_decision)
+#m1.clear_table(mydb, clear_tables_decision)
 
 
 # MAIN FUNCTION----------------------------------------------------------------

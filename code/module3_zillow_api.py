@@ -84,8 +84,8 @@ def get_house_data_zillow_api(address, zipcode, pull_date, asking_price):
 			val_zillow_api.append(datetime.strptime(df.iloc[5, 0], '%m/%d/%Y')) # last sold date
 		# If None date append the arbitrary date of 01/01/1900
 		except ValueError as err:
-			print('Zillow api returned the following sold date => {}'.format(df.iloc[5,0]))
 			print('Zillow api value error generated:  {}'.format(err))
+			print('Using the arbitrary date 01/01/1900\n')
 			val_zillow_api.append(datetime.strptime('01/01/1900', '%m/%d/%Y')) # last sold date
 		
 		val_zillow_api.append(df.iloc[6,0])                 # last sold price   
