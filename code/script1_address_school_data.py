@@ -131,11 +131,6 @@ def main_get_home_data(city, state):
 
 # USER INPUT---------------------------------------------------------------------
 
-# User Input Data:
-City =  input('Enter City (ex: Roswell): ')
-State = input('Enter State (ex: GA)    : ')
-'''tables = ADDRESSES, HOUSE_DETAILS, SCHOOLS'''
-# Ask if they want to clear th etables
 
 # Clear Existing Table Data:
 #clear_tables_decision = input('''Do you want to delete the data from the following tables?
@@ -147,10 +142,28 @@ State = input('Enter State (ex: GA)    : ')
 
 
 # MAIN FUNCTION----------------------------------------------------------------
-#main_get_home_data(City, State)
 
-df = list(m1.get_ga_muni_data(mydb)['NAME'])
-print(df)
+# Define Run-Type:
+run_type = input('Run scraper for an individual city or all? (write: indv or all)' )
+
+
+# If Individual - Input City/State
+if run_type == 'indv':
+	# User Input Data:
+	City =  input('Enter City (ex: Roswell): ')
+	State = input('Enter State (ex: GA)    : ')
+
+	# Run Scraper for Selected City/State
+	#main_get_home_data(City, State)
+
+elif run_tupe == 'all':
+	df_cities = list(m1.get_ga_muni_data(mydb)['NAME'])
+	
+	for city in df_cities:
+		main_get_home_data(city, 'GA')
+		print('Scraping data for city => {}'.format())
+else:
+	print('Input value incorrect.  Needs to be either "indv or all"')
 
 
 # NOTES_ ----------------------------------------------------------------------
