@@ -21,8 +21,8 @@ import module4_url_filters as m4
 
 
 # USER INPUT-------------------------------------------------------------------------
-user_name = 'ccirelli2' #input('user name:  ')
-password  = 'Work4starr' #input('password :  ')
+user_name = input('user name:  ')
+password  = input('password :  ')
 mysql_db  = 'HOUSING_DATA'#input('database :  ')
 
 # INSTANTIATE CONNECTION TO MYSQL DATABASE--------------------------------------------
@@ -137,19 +137,20 @@ State = input('Enter State (ex: GA)    : ')
 '''tables = ADDRESSES, HOUSE_DETAILS, SCHOOLS'''
 # Ask if they want to clear th etables
 
-clear_tables_decision = input('''Do you want to delete the data from the following tables?
-	
-	1. Addresses, 
-	2. House Details, 
-	3. Schools
-
-	Indicate Yes or No:  ''')
+# Clear Existing Table Data:
+#clear_tables_decision = input('''Do you want to delete the data from the following tables?
+#	1. Addresses, 
+#	2. House Details, 
+#	3. Schools
+#	Indicate Yes or No:  ''')
 #m1.clear_table(mydb, clear_tables_decision)
 
 
 # MAIN FUNCTION----------------------------------------------------------------
-main_get_home_data(City, State)
+#main_get_home_data(City, State)
 
+df = list(m1.get_ga_muni_data(mydb)['NAME'])
+print(df)
 
 
 # NOTES_ ----------------------------------------------------------------------

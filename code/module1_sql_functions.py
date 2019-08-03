@@ -147,3 +147,22 @@ def sql_insert_function_zillow_api_data(mydb, val):
 
 	return None
 
+
+
+
+
+# GET GEORGIA MUNICIPAL DATA
+
+def get_ga_muni_data(mydb):
+	sql_command = '''SELECT 
+					 NAME, TYPE, COUNTY 
+					 FROM GA_MUNICIPALITIES 
+					 WHERE TYPE = 'Town';
+				  '''
+	df = pd.read_sql(sql_command, mydb)
+	return df
+
+
+
+
+

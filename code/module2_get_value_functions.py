@@ -279,9 +279,6 @@ def get_sale_asking_price(home):
 			print('Unable to clean asking price.  Returning $0')
 			return 0
 
-		
-
-
 
 
 
